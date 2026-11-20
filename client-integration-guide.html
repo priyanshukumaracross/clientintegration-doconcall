@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Client API Integration Guide</title>
+<meta name="description" content="How partners send Global Doctor On Call enrolments through the Client API — UAT and Production.">
+<style>
+  :root {
+    --ink: #14213d;
+    --ink-soft: #55607a;
+    --line: #e3e7ef;
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --primary: #12357a;
+    --primary-soft: #e8eefb;
+    --accent: #f26b1d;
+    --ok: #0f7b4b;
+    --ok-soft: #e6f5ee;
+    --warn: #9a5b00;
+    --warn-soft: #fff4e0;
+    --code-bg: #0f1a2e;
+    --code-ink: #e6ecf7;
+    --radius: 12px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  a { color: var(--primary); }
+  code { font-family: var(--mono); font-size: 0.88em; background: var(--primary-soft); color: var(--primary); padding: 1px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+
+  .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); max-width: 1180px; margin: 0 auto; gap: 40px; padding: 0 24px; }
+  nav.toc { position: sticky; top: 0; align-self: start; padding: 28px 0; max-height: 100vh; overflow-y: auto; }
+  nav.toc p { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+  nav.toc a { display: block; padding: 5px 10px; border-radius: 8px; color: var(--ink-soft); text-decoration: none; font-size: 14px; }
+  nav.toc a:hover { background: var(--primary-soft); color: var(--primary); }
+  main { padding: 28px 0 80px; min-width: 0; }
+
+  header.hero { background: var(--primary); color: #fff; border-radius: var(--radius); padding: 32px 32px 28px; margin-bottom: 28px; }
+  header.hero .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .75; margin: 0 0 6px; }
+  header.hero h1 { margin: 0 0 8px; font-size: 30px; line-height: 1.2; }
+  header.hero p { margin: 0; max-width: 680px; opacity: .9; }
+  header.hero .meta { margin-top: 16px; font-size: 13px; opacity: .75; }
+
+  .env { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 28px; position: sticky; top: 0; z-index: 5; box-shadow: 0 6px 16px -12px rgba(20,33,61,.35); }
+  .env-label { font-weight: 700; font-size: 13px; color: var(--ink-soft); }
+  .seg { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .seg button { border: 0; background: transparent; font: inherit; font-weight: 600; font-size: 14px; color: var(--ink-soft); padding: 6px 14px; border-radius: 7px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--primary); color: #fff; }
+  .env-url { font-family: var(--mono); font-size: 13.5px; color: var(--ink); overflow-wrap: anywhere; }
+  .env-note { font-size: 13px; color: var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 4px 10px; }
+
+  section { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 28px; margin-bottom: 20px; scroll-margin-top: 90px; }
+  section h2 { margin: 0 0 4px; font-size: 21px; display: flex; align-items: center; gap: 10px; }
+  .num { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 14px; flex: none; }
+  section > .lead { margin: 0 0 16px; color: var(--ink-soft); }
+  h3 { font-size: 16px; margin: 22px 0 8px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 10px 0 6px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); background: var(--bg); }
+  td.req { color: var(--accent); font-weight: 700; text-align: center; }
+  .table-wrap { overflow-x: auto; }
+
+  .code { position: relative; margin: 10px 0 14px; }
+  .code pre { margin: 0; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 16px 18px; overflow-x: auto; font: 13px/1.55 var(--mono); }
+  .code .tag { position: absolute; top: 8px; left: 14px; font: 600 11px/1 var(--mono); color: #8ea2c8; text-transform: uppercase; letter-spacing: .06em; }
+  .code .tag + pre { padding-top: 28px; }
+  .copy { position: absolute; top: 8px; right: 8px; border: 1px solid #2c3d5e; background: #1a2944; color: #c9d5ec; font: 600 12px/1 inherit; padding: 6px 10px; border-radius: 7px; cursor: pointer; }
+  .copy:hover { background: #24375a; }
+  .tok-k { color: #8fc1ff; } .tok-s { color: #b7e4a4; } .tok-c { color: #7d8db0; }
+
+  .callout { border-radius: 10px; padding: 12px 14px; margin: 12px 0; font-size: 14px; }
+  .callout.info { background: var(--primary-soft); color: var(--primary); }
+  .callout.warn { background: var(--warn-soft); color: var(--warn); }
+  .callout.ok { background: var(--ok-soft); color: var(--ok); }
+  .callout strong { color: inherit; }
+
+  .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 14px 0 4px; counter-reset: step; }
+  .flow div { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: var(--bg); position: relative; }
+  .flow div::before { counter-increment: step; content: counter(step); display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .flow b { display: block; font-size: 14px; }
+  .flow span { font-size: 13px; color: var(--ink-soft); }
+  .who { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--accent); }
+
+  .tabs { display: flex; gap: 4px; margin-top: 10px; }
+  .tabs button { border: 1px solid var(--line); border-bottom: 0; background: var(--bg); font: inherit; font-size: 13px; font-weight: 600; color: var(--ink-soft); padding: 6px 12px; border-radius: 8px 8px 0 0; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--code-bg); color: #fff; border-color: var(--code-bg); }
+  .tabpanel .code { margin-top: 0; }
+  .tabpanel .code pre { border-top-left-radius: 0; }
+
+  ul.check { list-style: none; padding: 0; margin: 8px 0 0; }
+  ul.check li { padding: 6px 0 6px 30px; position: relative; border-bottom: 1px dashed var(--line); }
+  ul.check li::before { content: ""; position: absolute; left: 4px; top: 10px; width: 14px; height: 14px; border: 2px solid var(--primary); border-radius: 4px; }
+
+  footer { color: var(--ink-soft); font-size: 13px; text-align: center; padding: 10px 0 40px; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; padding: 0 16px; gap: 0; }
+    nav.toc { display: none; }
+    .flow { grid-template-columns: 1fr 1fr; }
+    section { padding: 20px 18px; }
+    header.hero { padding: 24px 20px; }
+    header.hero h1 { font-size: 24px; }
+  }
+  @media (max-width: 520px) { .flow { grid-template-columns: 1fr; } }
+  @media print {
+    body { background: #fff; font-size: 12px; }
+    .layout { display: block; padding: 0; }
+    nav.toc, .copy, .env .seg, .tabs { display: none; }
+    .env { position: static; box-shadow: none; }
+    section { break-inside: avoid; border-color: #ccc; }
+    .tabpanel[hidden] { display: block !important; }
+    .code pre { background: #f3f5f9; color: #111; border: 1px solid #ddd; white-space: pre-wrap; }
+    .tok-k, .tok-s, .tok-c { color: inherit; }
+    header.hero { background: #fff; color: var(--ink); border: 2px solid var(--primary); }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <a href="#overview">Overview</a>
+    <a href="#environments">Environments</a>
+    <a href="#credentials">1. Credentials</a>
+    <a href="#token">2. Get an access token</a>
+    <a href="#send">3. Send enrolments</a>
+    <a href="#check">4. Check what we have</a>
+    <a href="#customer-auth">5. Sign a customer in</a>
+    <a href="#errors">Errors and retries</a>
+    <a href="#examples">Full examples</a>
+    <a href="#next">What happens next</a>
+    <a href="#golive">Go-live checklist</a>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Global Doctor On Call · Partner integration</p>
+      <h1>Client API Integration Guide</h1>
+      <p>Send us your customers’ Global Doctor On Call enrolments from your own system, check their status at any time, and sign your customers straight in to the app. Each enrolment gets its policy number as soon as we receive it; we verify the details and activate it.</p>
+      <p class="meta">Version 2.0 · 20 November 2026</p>
+    </header>
+
+    <div class="env" role="group" aria-label="Environment">
+      <span class="env-label">Environment</span>
+      <div class="seg">
+        <button type="button" data-env="uat" aria-pressed="true">UAT (testing)</button>
+        <button type="button" data-env="prod" aria-pressed="false">Production</button>
+      </div>
+      <span class="env-url" id="env-url"></span>
+      <span class="env-note" id="env-note" hidden>The Production URL will be shared with you before go-live. The examples show a placeholder until then.</span>
+    </div>
+
+    <section id="overview">
+      <h2>Overview</h2>
+      <p class="lead">All over HTTPS with JSON.</p>
+      <div class="flow">
+        <div><span class="who">You</span><b>Get a token</b><span>Exchange your Client ID and Secret for a 1-hour access token.</span></div>
+        <div><span class="who">You</span><b>Send enrolments</b><span>Up to 500 customers per call. Each gets its policy number in the response.</span></div>
+        <div><span class="who">We</span><b>Verify &amp; activate</b><span>We check the details and activate the subscription. The customer is emailed their app link.</span></div>
+        <div><span class="who">You</span><b>Sign customers in</b><span>Send a customer straight in to the app from your own portal — no login code needed.</span></div>
+      </div>
+      <p style="margin:12px 0 0">You can also <a href="#check">check each record’s status</a> at any time.</p>
+    </section>
+
+    <section id="environments">
+      <h2>Environments</h2>
+      <p class="lead">Use UAT while you build and test; switch to Production for live customers. Each environment has its own credentials.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Environment</th><th>Base URL</th><th>Use for</th></tr></thead>
+          <tbody>
+            <tr><td><strong>UAT</strong> (testing)</td><td><code>https://apidoc.acrossassist.in/api/v1</code></td><td>Development and testing. Use test data or your own email addresses.</td></tr>
+            <tr><td><strong>Production</strong></td><td id="prod-url-cell"><em>Will be shared before go-live</em></td><td>Live customers only.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>All paths below are relative to the base URL, shown as <code>{BASE_URL}</code>. The switch at the top fills it into every example.</p>
+    </section>
+
+    <section id="credentials">
+      <h2><span class="num">1</span>Credentials</h2>
+      <p class="lead">We give you a <strong>Client ID</strong> (starts with <code>gdoc_</code>) and a <strong>Client Secret</strong> for each environment.</p>
+      <div class="callout warn"><strong>Keep the secret on your server.</strong> Never put it in a mobile app, a web page, a URL or a log. If it leaks, ask us for a new one; the old secret stops working immediately.</div>
+    </section>
+
+    <section id="token">
+      <h2><span class="num">2</span>Get an access token</h2>
+      <div class="code"><span class="tag">Request</span><pre data-tpl>POST {BASE_URL}/client-api/token
+Content-Type: application/json
+
+{ "clientId": "gdoc_…", "clientSecret": "…", "policyNumber": "AADOC000123" }</pre></div>
+      <p><code>client_id</code> / <code>client_secret</code> are accepted too, or HTTP Basic authentication (<code>-u clientId:clientSecret</code>).</p>
+      <p><strong><code>policyNumber</code> is optional.</strong> Leave it out for a normal token. Send it only when you are about to <a href="#customer-auth">sign that customer in</a>: the token is then tied to that policy, valid for <strong>15 minutes</strong>, and the response also contains <code>"policy_number"</code>. A policy-bound token works for every other API as well. The policy must be one of yours (otherwise <code>404 Policy not found</code>).</p>
+      <div class="code"><span class="tag">Response · 200</span><pre>{
+  "success": true,
+  "message": "Token issued",
+  "data": { "access_token": "eyJ…", "token_type": "Bearer", "expires_in": 3600 }
+}</pre></div>
+      <p>The token is valid for <strong>1 hour</strong>. Send it on every other call as <code>Authorization: Bearer &lt;access_token&gt;</code>. Reuse it until it expires, then get a new one (you’ll get <code>401</code>).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Status</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>401</code> Invalid client credentials</td><td>Wrong ID or secret, or your access has been switched off.</td></tr>
+            <tr><td><code>429</code></td><td>Too many wrong attempts — wait 15 minutes.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="send">
+      <h2><span class="num">3</span>Send enrolments</h2>
+      <div class="code"><span class="tag">Request</span><pre data-tpl>POST {BASE_URL}/client-api/sales
+Authorization: Bearer &lt;access_token&gt;
+Content-Type: application/json</pre></div>
+
+      <h3>Fields</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Required</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>gwfNumber</code></td><td class="req">✔</td><td>GWF No (Visa Application Reference Number) — the record’s key. Spaces are ignored and it isn’t case-sensitive. Max 50 characters.</td></tr>
+            <tr><td><code>fullName</code></td><td class="req">✔</td><td>Max 100 characters.</td></tr>
+            <tr><td><code>email</code></td><td class="req">✔</td><td>The customer signs in to the app with this email.</td></tr>
+            <tr><td><code>mobileNumber</code></td><td class="req">✔*</td><td>A 10-digit Indian mobile (<code>9876543210</code>, <code>+91 98765 43210</code> and <code>098765 43210</code> all work), or an international number starting with <code>+</code>. <strong>*Required when your account is set up that way</strong> (we’ll tell you) — records without one are then rejected.</td></tr>
+            <tr><td><code>countryOfVisaApplicationCenter</code></td><td></td><td>Max 100 characters.</td></tr>
+            <tr><td><code>estimatedDateOfTravel</code></td><td></td><td><code>YYYY-MM-DD</code> or <code>DD/MM/YYYY</code>.</td></tr>
+            <tr><td><code>subscriptionStartDate</code></td><td></td><td>First day of cover. <code>YYYY-MM-DD</code> or <code>DD/MM/YYYY</code>. Send together with <code>subscriptionEndDate</code>: once we’ve verified the record, these become its activation date and validity. Without them, we set the activation date (30 days of cover).</td></tr>
+            <tr><td><code>subscriptionEndDate</code></td><td></td><td>Last day of cover (inclusive). On or after the start date, at most about a year later.</td></tr>
+            <tr><td><code>dateOfBirth</code></td><td></td><td><code>YYYY-MM-DD</code> or <code>DD/MM/YYYY</code>, in the past.</td></tr>
+            <tr><td><code>gender</code></td><td></td><td><code>Male</code>, <code>Female</code> or <code>Other</code> (also <code>M</code> / <code>F</code> / <code>O</code>). With <code>dateOfBirth</code>, the customer’s profile is complete — they are <strong>not</strong> asked for these details in the app.</td></tr>
+            <tr><td><code>paymentDateTime</code></td><td></td><td>When the customer paid you, e.g. <code>2026-11-20T14:30:00+05:30</code>. A time without a zone is read as India time.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Body formats.</strong> Send one record, an array of records, or <code>{ "records": [ … ] }</code> — up to <strong>500 records</strong> per call (1 MB). Field names are matched without regard to case, and <code>gwfNo</code>, <code>name</code>, <code>emailAddress</code>, <code>mobile</code>, <code>country</code>, <code>travelDate</code>, <code>startDate</code>, <code>endDate</code>, <code>dob</code> and <code>paymentDate</code> are accepted as alternatives.</p>
+      <div class="code"><span class="tag">Body</span><pre>{
+  "records": [
+    {
+      "gwfNumber": "GWF012345678",
+      "fullName": "Asha Rao",
+      "email": "asha.rao@example.com",
+      "mobileNumber": "9876543210",
+      "countryOfVisaApplicationCenter": "India",
+      "estimatedDateOfTravel": "2026-12-20",
+      "subscriptionStartDate": "2026-12-01",
+      "subscriptionEndDate": "2026-12-30",
+      "dateOfBirth": "1990-02-01",
+      "gender": "Female",
+      "paymentDateTime": "2026-11-20T14:30:00+05:30"
+    },
+    { "gwfNumber": "GWF012345679", "fullName": "Ravi Kumar", "email": "ravi.k@example.com", "mobileNumber": "9812345678" }
+  ]
+}</pre></div>
+      <p><strong>Sending the same <code>gwfNumber</code> again</strong> replaces its details, as long as we haven’t activated it yet. After activation, changes go through our support team.</p>
+
+      <h3>Response</h3>
+      <p>One result per record, in the order sent:</p>
+      <div class="code"><span class="tag">Response · 200</span><pre>{
+  "success": true,
+  "message": "Some records were rejected",
+  "data": {
+    "received": 3, "created": 1, "updated": 1, "rejected": 1,
+    "results": [
+      { "index": 0, "gwfNumber": "GWF012345678", "status": "created", "policyNumber": "AADOC000123" },
+      { "index": 1, "gwfNumber": "GWF012345679", "status": "updated", "policyNumber": "AADOC000124" },
+      { "index": 2, "gwfNumber": "GWF012345680", "status": "rejected", "errors": ["email is required"] }
+    ]
+  }
+}</pre></div>
+      <p><strong>Every saved record returns its <code>policyNumber</code></strong> straight away — keep it: it’s the customer’s policy number once activated, and you need it to <a href="#customer-auth">sign the customer in</a>. Sending the same GWF No again keeps the same number.</p>
+      <div class="callout info"><strong>Always check <code>rejected</code> and <code>results</code>.</strong> A rejected record wasn’t saved — fix it and send it again. The other records in the same call were saved.</div>
+      <p>Rejection reasons you may see:</p>
+      <ul>
+        <li><code>This GWF No is already activated — contact support to change it</code></li>
+        <li><code>This GWF No has already been registered by another source</code>, or <code>This GWF No is already registered with us</code></li>
+        <li><code>Duplicate of record N in this call</code></li>
+        <li>Field problems, such as <code>fullName is required</code>, <code>mobileNumber is required</code>, <code>mobileNumber: …</code> or <code>subscriptionEndDate must be on or after subscriptionStartDate</code></li>
+      </ul>
+    </section>
+
+    <section id="check">
+      <h2><span class="num">4</span>Check what we have</h2>
+      <div class="code"><span class="tag">Request</span><pre data-tpl>GET {BASE_URL}/client-api/sales?page=1&amp;limit=100
+Authorization: Bearer &lt;access_token&gt;</pre></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Filter</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>status=PENDING_ACTIVATION</code></td><td>Received, not yet activated.</td></tr>
+            <tr><td><code>status=ACTIVATED</code></td><td>Activated — the customer can sign in.</td></tr>
+            <tr><td><code>gwfNumber=…</code></td><td>One GWF No.</td></tr>
+            <tr><td><code>from=YYYY-MM-DD&amp;to=YYYY-MM-DD</code></td><td>Received between these dates (India time).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><code>limit</code> can be up to 100. Use <code>meta.totalPages</code> to page through everything.</p>
+      <div class="code"><span class="tag">Response · 200</span><pre>{
+  "success": true,
+  "data": [
+    {
+      "gwfNumber": "GWF012345678",
+      "fullName": "Asha Rao",
+      "email": "asha.rao@example.com",
+      "mobileNumber": "+919876543210",
+      "countryOfVisaApplicationCenter": "India",
+      "estimatedDateOfTravel": "2026-12-20",
+      "subscriptionStartDate": "2026-12-01",
+      "subscriptionEndDate": "2026-12-30",
+      "dateOfBirth": "1990-02-01",
+      "gender": "FEMALE",
+      "paymentDateTime": "2026-11-20T09:00:00.000Z",
+      "status": "ACTIVATED",
+      "activationDate": "2026-12-01",
+      "validUntil": "2026-12-30",
+      "policyNumber": "AADOC000123",
+      "receivedAt": "2026-11-17T09:30:00.000Z",
+      "updatedAt": "2026-11-17T09:30:00.000Z"
+    }
+  ],
+  "meta": { "page": 1, "limit": 100, "total": 1, "totalPages": 1 }
+}</pre></div>
+      <p>To look up a single record: <code>GET {BASE_URL}/client-api/sales/{gwfNumber}</code> — <code>404</code> if we don’t have it. Until a record is activated, <code>activationDate</code> and <code>validUntil</code> are <code>null</code>; <code>policyNumber</code> is already set.</p>
+    </section>
+
+    <section id="customer-auth">
+      <h2><span class="num">5</span>Sign a customer in to the app</h2>
+      <p class="lead">When a customer who is signed in on your portal wants to use Global Doctor On Call, send them straight in to the app — they don’t enter a login code.</p>
+      <div class="flow" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div><span class="who">You · server</span><b>Policy token</b><span><code>POST /client-api/token</code> with your credentials and the customer’s <code>policyNumber</code>.</span></div>
+        <div><span class="who">You · server</span><b>Authenticate</b><span><code>POST /client-api/customer-auth</code> with the customer’s details. You get a <code>redirectUrl</code>.</span></div>
+        <div><span class="who">Customer’s browser</span><b>Redirect</b><span>Send the customer to <code>redirectUrl</code>. The app opens, already signed in.</span></div>
+      </div>
+
+      <div class="code"><span class="tag">Request</span><pre data-tpl>POST {BASE_URL}/client-api/customer-auth
+Authorization: Bearer &lt;token issued for this policyNumber&gt;
+Content-Type: application/json
+
+{
+  "gwfNumber": "GWF012345678",
+  "policyNumber": "AADOC000123",
+  "fullName": "Asha Rao",
+  "email": "asha.rao@example.com",
+  "mobileNumber": "9876543210"
+}</pre></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Required</th><th>Checked against the policy</th></tr></thead>
+          <tbody>
+            <tr><td><code>gwfNumber</code></td><td class="req">✔</td><td>Must be this policy’s GWF No (spaces and case ignored).</td></tr>
+            <tr><td><code>policyNumber</code></td><td class="req">✔</td><td>Must be the policy the token was issued for, and activated.</td></tr>
+            <tr><td><code>fullName</code></td><td class="req">✔</td><td>Must match the name you sent (case, spacing and punctuation ignored).</td></tr>
+            <tr><td><code>email</code></td><td rowspan="2" class="req" style="vertical-align:middle">one or both</td><td>Must match the policy’s email.</td></tr>
+            <tr><td><code>mobileNumber</code></td><td>Must match the policy’s mobile number (any of the formats above).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code"><span class="tag">Response · 200</span><pre>{
+  "success": true,
+  "message": "Customer authenticated — redirect them to redirectUrl",
+  "data": {
+    "redirectUrl": "https://&lt;your-app&gt;/sso#code=eyJhbGciOiJIUzI1NiIs…",
+    "expiresIn": 300,
+    "policyNumber": "AADOC000123"
+  }
+}</pre></div>
+      <div class="callout info"><strong>Redirect the customer within 5 minutes.</strong> The link signs in exactly one browser, once. It carries a signed, single-use token after <code>#</code>, which browsers never send to any server, and the app exchanges it for the customer’s session (JWT access and refresh tokens). Call this API again for a new link whenever the customer comes back.</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Status</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td><code>401</code></td><td>The token is missing or expired, or wasn’t issued for a policy (get one with <code>policyNumber</code>).</td></tr>
+            <tr><td><code>403</code></td><td>The token was issued for a different policy, or the policy has been deactivated.</td></tr>
+            <tr><td><code>404</code></td><td>Policy not found (not one of yours).</td></tr>
+            <tr><td><code>409</code></td><td>The policy hasn’t been activated yet, or your customer app isn’t set up yet.</td></tr>
+            <tr><td><code>422</code></td><td>The details don’t match the policy — the message names the fields, e.g. <code>The customer details don't match this policy: email</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The customer can always sign in to the app with a login code to their email instead.</p>
+    </section>
+
+    <section id="errors">
+      <h2>Errors and retries</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Status</th><th>When</th><th>What to do</th></tr></thead>
+          <tbody>
+            <tr><td><code>200</code></td><td>The call was processed (some records may be rejected).</td><td>Check <code>rejected</code> and <code>results</code>.</td></tr>
+            <tr><td><code>422</code></td><td>Every record in the call was rejected.</td><td>Fix the records listed in <code>results</code> and resend.</td></tr>
+            <tr><td><code>400</code></td><td>The body is empty or not JSON.</td><td>Check the request body.</td></tr>
+            <tr><td><code>413</code></td><td>More than 500 records, or over 1 MB.</td><td>Split into smaller calls.</td></tr>
+            <tr><td><code>401</code></td><td>The token is missing, expired or invalid.</td><td>Get a new token and retry.</td></tr>
+            <tr><td><code>429</code></td><td>Too many requests.</td><td>Wait, then retry.</td></tr>
+            <tr><td><code>5xx</code> or no response</td><td>A temporary problem.</td><td>Retry with a delay. Sending a record twice is safe.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Every response has the same shape: <code>success</code>, <code>message</code>, and <code>data</code> (plus <code>meta</code> on lists).</p>
+    </section>
+
+    <section id="examples">
+      <h2>Full examples</h2>
+      <p class="lead">Get a token, send customers, list the ones still pending — and (curl) sign a customer in.</p>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" aria-selected="true" data-tab="curl">curl</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="node">Node.js</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="python">Python</button>
+      </div>
+      <div class="tabpanel" data-panel="curl"><div class="code"><pre data-tpl>BASE={BASE_URL}
+
+TOKEN=$(curl -s -X POST $BASE/client-api/token \
+  -H 'Content-Type: application/json' \
+  -d '{"clientId":"gdoc_…","clientSecret":"…"}' | jq -r .data.access_token)
+
+curl -X POST $BASE/client-api/sales \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{
+    "records": [
+      { "gwfNumber": "GWF012345678", "fullName": "Asha Rao", "email": "asha.rao@example.com",
+        "mobileNumber": "9876543210", "countryOfVisaApplicationCenter": "India",
+        "estimatedDateOfTravel": "2026-12-20" },
+      { "gwfNumber": "GWF012345679", "fullName": "Ravi Kumar", "email": "ravi.k@example.com" }
+    ]
+  }'
+
+curl "$BASE/client-api/sales?status=PENDING_ACTIVATION" -H "Authorization: Bearer $TOKEN"
+
+# Later, once activated: sign the customer in
+PTOKEN=$(curl -s -X POST $BASE/client-api/token \
+  -H 'Content-Type: application/json' \
+  -d '{"clientId":"gdoc_…","clientSecret":"…","policyNumber":"AADOC000123"}' | jq -r .data.access_token)
+
+curl -s -X POST $BASE/client-api/customer-auth \
+  -H "Authorization: Bearer $PTOKEN" -H 'Content-Type: application/json' \
+  -d '{ "gwfNumber": "GWF012345678", "policyNumber": "AADOC000123", "fullName": "Asha Rao",
+        "email": "asha.rao@example.com", "mobileNumber": "9876543210" }' | jq -r .data.redirectUrl
+# → send the customer's browser to this URL</pre></div></div>
+      <div class="tabpanel" data-panel="node" hidden><div class="code"><pre data-tpl>// Node.js 18+ (built-in fetch)
+const BASE = '{BASE_URL}';
+
+async function getToken() {
+  const res = await fetch(`${BASE}/client-api/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clientId: process.env.GDOC_CLIENT_ID, clientSecret: process.env.GDOC_CLIENT_SECRET }),
+  });
+  if (!res.ok) throw new Error(`Token request failed: ${res.status}`);
+  return (await res.json()).data.access_token;
+}
+
+async function sendEnrolments(records) {
+  const token = await getToken();
+  const res = await fetch(`${BASE}/client-api/sales`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ records }),
+  });
+  const body = await res.json();
+  for (const r of body.data?.results ?? []) {
+    if (r.status === 'rejected') console.warn(r.gwfNumber, r.errors.join('; '));
+  }
+  return body.data;
+}
+
+sendEnrolments([
+  { gwfNumber: 'GWF012345678', fullName: 'Asha Rao', email: 'asha.rao@example.com', mobileNumber: '9876543210' },
+]).then(console.log);</pre></div></div>
+      <div class="tabpanel" data-panel="python" hidden><div class="code"><pre data-tpl># Python 3 with requests (pip install requests)
+import os, requests
+
+BASE = "{BASE_URL}"
+
+def get_token():
+    r = requests.post(f"{BASE}/client-api/token", json={
+        "clientId": os.environ["GDOC_CLIENT_ID"],
+        "clientSecret": os.environ["GDOC_CLIENT_SECRET"],
+    }, timeout=30)
+    r.raise_for_status()
+    return r.json()["data"]["access_token"]
+
+def send_enrolments(records):
+    token = get_token()
+    r = requests.post(f"{BASE}/client-api/sales", json={"records": records},
+                      headers={"Authorization": f"Bearer {token}"}, timeout=60)
+    data = r.json()["data"]
+    for res in data["results"]:
+        if res["status"] == "rejected":
+            print(res["gwfNumber"], "; ".join(res["errors"]))
+    return data
+
+print(send_enrolments([
+    {"gwfNumber": "GWF012345678", "fullName": "Asha Rao", "email": "asha.rao@example.com", "mobileNumber": "9876543210"},
+]))</pre></div></div>
+    </section>
+
+    <section id="next">
+      <h2>What happens next</h2>
+      <ol>
+        <li>Your records appear in our admin panel under your company’s name, each with the policy number you received.</li>
+        <li>We verify the details and activate each record. With <code>subscriptionStartDate</code> and <code>subscriptionEndDate</code>, those are its activation date and validity; without them, we set the activation date and the service runs for <strong>30 days</strong>. The customer then gets an email with the link to the app.</li>
+        <li><code>GET /client-api/sales</code> shows the record as <code>ACTIVATED</code>, with its activation date and validity. From then on you can <a href="#customer-auth">sign the customer in</a>.</li>
+        <li>If you sent <code>dateOfBirth</code> and <code>gender</code>, the customer goes straight to the app’s home screen; otherwise the app asks for them once.</li>
+      </ol>
+    </section>
+
+    <section id="golive">
+      <h2>Go-live checklist</h2>
+      <ul class="check">
+        <li>Token, send and status calls all work on <strong>UAT</strong>, including a rejected record (for example, one without an email).</li>
+        <li>Your system reads <code>results</code>, stores each <code>policyNumber</code>, and handles rejected records.</li>
+        <li>Customer sign-in works on UAT: policy token → <code>/client-api/customer-auth</code> → redirect, including a refused case (for example, a wrong name).</li>
+        <li>Expired tokens (<code>401</code>) are renewed automatically, and <code>5xx</code> errors are retried.</li>
+        <li>The Client Secret is stored only on your server (environment variable or secrets manager).</li>
+        <li>You have received your <strong>Production</strong> Client ID, Secret and base URL, and switched all three together.</li>
+      </ul>
+    </section>
+
+    <footer>Global Doctor On Call · Client API Integration Guide · v2.0</footer>
+  </main>
+</div>
+
+<script>
+  // Set this once the Production URL is confirmed, e.g. 'https://apidoc.example.com/api/v1'.
+  var PRODUCTION_BASE_URL = '';
+  var UAT_BASE_URL = 'https://apidoc.acrossassist.in/api/v1';
+  var PLACEHOLDER = 'https://<production-url-to-be-shared>/api/v1';
+
+  var blocks = Array.prototype.slice.call(document.querySelectorAll('pre[data-tpl]'));
+  blocks.forEach(function (pre) { pre.setAttribute('data-src', pre.textContent); });
+
+  if (PRODUCTION_BASE_URL) {
+    document.getElementById('prod-url-cell').innerHTML = '<code></code>';
+    document.querySelector('#prod-url-cell code').textContent = PRODUCTION_BASE_URL;
+  }
+
+  function setEnv(env) {
+    var base = env === 'prod' ? (PRODUCTION_BASE_URL || PLACEHOLDER) : UAT_BASE_URL;
+    blocks.forEach(function (pre) { pre.textContent = pre.getAttribute('data-src').split('{BASE_URL}').join(base); });
+    document.getElementById('env-url').textContent = base;
+    document.getElementById('env-note').hidden = !(env === 'prod' && !PRODUCTION_BASE_URL);
+    document.querySelectorAll('.seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-env') === env)); });
+  }
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () { setEnv(b.getAttribute('data-env')); });
+  });
+  setEnv('uat');
+
+  // Copy buttons.
+  document.querySelectorAll('.code').forEach(function (box) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var text = box.querySelector('pre').textContent;
+      var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+    });
+    box.appendChild(btn);
+  });
+
+  // Example tabs.
+  document.querySelectorAll('.tabs button').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var name = tab.getAttribute('data-tab');
+      document.querySelectorAll('.tabs button').forEach(function (t) { t.setAttribute('aria-selected', String(t === tab)); });
+      document.querySelectorAll('.tabpanel').forEach(function (p) { p.hidden = p.getAttribute('data-panel') !== name; });
+    });
+  });
+</script>
+</body>
+</html>
